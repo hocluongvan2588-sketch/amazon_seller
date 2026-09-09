@@ -20,6 +20,7 @@ function campaign(overrides: Partial<AdCampaign> = {}): AdCampaign {
     daily_budget: 20,
     status: "enabled",
     last_synced_at: "2026-09-08T00:00:00Z",
+    created_at: "2026-08-01T00:00:00Z",
     ...overrides,
   };
 }

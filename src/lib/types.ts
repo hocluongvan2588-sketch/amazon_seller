@@ -292,6 +292,7 @@ export interface LaunchProject {
   checklist: LaunchChecklistItem[];
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
 }
 
 export interface LaunchChecklistItem {
@@ -372,7 +373,7 @@ export interface InventorySnapshot {
   unfulfillable_units: number;
   units_sold: number; // in observation window
   observation_days: number;
-  average_daily_sales: number; // derived
+  average_daily_sales: number | null; // derived
   days_of_supply: number | null; // derived
   source_snapshot_id: string | null;
   created_at: string;
@@ -430,6 +431,7 @@ export interface AdCampaign {
   daily_budget: number;
   status: "enabled" | "paused" | "archived";
   last_synced_at: string | null;
+  created_at: string;
 }
 
 export interface AdMetricsDaily {

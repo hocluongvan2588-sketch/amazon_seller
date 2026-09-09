@@ -31,7 +31,7 @@ export interface InventoryInput {
 
 export interface InventoryComputed {
   skuId: string;
-  sku: string;
+  skuCode: string;
   averageDailySales: number;
   daysOfSupply: number | null;
   totalLeadTimeDays: number;
@@ -119,7 +119,7 @@ export function projectInventory(input: InventoryInput): InventoryComputed {
 
   return {
     skuId: input.skuId,
-    sku: input.sku,
+    skuCode: input.sku,
     averageDailySales: ads,
     daysOfSupply: dos,
     totalLeadTimeDays: lead,

@@ -9,6 +9,8 @@
 
 import type { EconomicsInputs, EconomicsResult } from "../types";
 
+export type { EconomicsInputs };
+
 export const ECONOMICS_FORMULA_VERSION = "econ-v1";
 
 /** Mandatory cost lines — if any is missing the profile is `incomplete`. */
