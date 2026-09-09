@@ -63,12 +63,13 @@ npm run build        # production build
 
 1. Tạo project Supabase (khuyên dùng region Singapore).
 2. Chạy tuần tự 5 file trong `supabase/migrations/` (SQL Editor hoặc `supabase db push`):
-   `0001_schema.sql` → `0002_rls.sql` → `0003_functions_triggers.sql` → `0004_storage.sql` → `0005_seed_reference.sql`
-3. Tạo users trong Authentication — trigger tự tạo `profiles`.
-4. Insert `organizations`, `organization_members`, `client_accounts`, `user_client_access` (tham khảo shape trong `src/lib/data/demo/seed.ts`).
-5. Copy `.env.example` → `.env.local`, điền credentials.
+   `0001_schema.sql` → `0002_rls.sql` → `0003_functions_triggers.sql` → `0004_storage.sql` → `0005_seed_reference.sql` *(file seed tự chứa & idempotent — tự tạo org nếu trống, không cần sửa UUID)*
+3. Authentication → Users → **Add user** (email + password) — trigger tự tạo `profiles`.
+4. SQL Editor: `select public.bootstrap_first_user();` — user đầu tiên thành **owner**, có client đầu tiên + full access.
+5. Copy `.env.example` → `.env.local`, điền `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+6. `npm run dev` → trang /login sẽ hiển thị form email/password.
 
-Xem chi tiết: [`supabase/README.md`](supabase/README.md).
+Xem chi tiết (kể thêm cách thêm thành viên, guardrail, troubleshooting): [`supabase/README.md`](supabase/README.md).
 
 ## 4. Cấu trúc thư mục
 

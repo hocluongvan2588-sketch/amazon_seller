@@ -9,8 +9,7 @@
  * neutral values. Session comes from Supabase Auth.
  */
 
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { getSupabaseServerClient } from "./supabaseClient";
 import type {
   AiRun,
   ApprovalRequest,
@@ -48,17 +47,7 @@ import { buildInventoryRows, buildTodayCards } from "./builders";
 import { normalizeCompetitorRows } from "../domain/import";
 
 function supabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  return createServerClient(url, anon, {
-    cookies: {
-      getAll: async () => (await cookies()).getAll(),
-      setAll: async (list) => {
-        const jar = await cookies();
-        for (const { name, value, options } of list) jar.set(name, value, options);
-      },
-    },
-  });
+  return getSupabaseServerClient();
 }
 
 class PermissionError extends Error {}

@@ -10,7 +10,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect, unstable_rethrow } from "next/navigation";
 import Papa from "papaparse";
-import { getAdapter } from "@/lib/data/factory";
+import { getAdapter, isSupabaseConfigured } from "@/lib/data/factory";
+import { getSupabaseServerClient } from "@/lib/data/supabaseClient";
 import { clearSession, getSessionUser, setDemoUser } from "@/lib/session";
 
 function requireUser() {
@@ -35,7 +36,31 @@ export async function loginAsAction(formData: FormData) {
   redirect("/today");
 }
 
+export async function signInAction(formData: FormData) {
+  if (!isSupabaseConfigured()) {
+    flash("/login", "Ứng dụng đang chạy DEMO MODE — chọn người dùng demo để vào.", false);
+  }
+  const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  if (!email || !password) {
+    flash("/login", "Vui lòng nhập email và mật khẩu.", false);
+  }
+  const sb = getSupabaseServerClient();
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) {
+    flash("/login", `Đăng nhập thất bại: ${error.message}`, false);
+  }
+  redirect("/today");
+}
+
 export async function logoutAction() {
+  if (isSupabaseConfigured()) {
+    try {
+      await getSupabaseServerClient().auth.signOut();
+    } catch {
+      // cookie clearing below is enough for the demo flow
+    }
+  }
   await clearSession();
   redirect("/login");
 }

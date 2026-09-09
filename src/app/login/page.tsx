@@ -4,16 +4,20 @@ import { getSessionUser } from "@/lib/session";
 import { isSupabaseConfigured } from "@/lib/data/factory";
 import { ROLE_LABELS, DEPARTMENT_LABELS } from "@/lib/permissions";
 import type { SystemRole } from "@/lib/types";
-import { loginAsAction } from "@/lib/actions";
+import { loginAsAction, signInAction } from "@/lib/actions";
+import { Flash } from "@/components/Flash";
 import { Avatar, Badge } from "@/components/ui";
 
 export const metadata = { title: "Đăng nhập" };
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
   const user = await getSessionUser();
   if (user) redirect("/today");
-  const adapter = getAdapter();
-  const members = await adapter.listMembers();
   const demo = !isSupabaseConfigured();
 
   return (
@@ -31,6 +35,8 @@ export default async function LoginPage() {
           </p>
         </div>
 
+        <Flash searchParams={params} />
+
         {demo ? (
           <div className="card p-6">
             <div className="mb-1 flex items-center gap-2">
@@ -43,7 +49,7 @@ export default async function LoginPage() {
               <strong>Trịnh Văn Hùng</strong> (reviewer) để thấy phân quyền thay đổi.
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
-              {members
+              {(await getAdapter().listMembers())
                 .filter((m) => m.status === "active")
                 .map((m) => (
                   <form key={m.id} action={loginAsAction}>
@@ -70,10 +76,34 @@ export default async function LoginPage() {
             </div>
           </div>
         ) : (
-          <div className="card p-6 text-center">
-            <p className="text-sm text-slate-600">
-              Đăng nhập bằng Supabase Auth. Vui lòng liên hệ admin để được cấp tài khoản nội bộ.
-            </p>
+          <div className="mx-auto max-w-md">
+            <div className="card p-6">
+              <h2 className="text-sm font-semibold text-slate-800">Đăng nhập nội bộ</h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Tài khoản do admin cấp qua Supabase Authentication. Không có public signup (spec §7.1).
+              </p>
+              <form action={signInAction} className="mt-5 space-y-3">
+                <div>
+                  <label className="label">Email</label>
+                  <input name="email" type="email" required autoComplete="email" placeholder="ban@congty.vn" className="input" />
+                </div>
+                <div>
+                  <label className="label">Mật khẩu</label>
+                  <input name="password" type="password" required autoComplete="current-password" placeholder="••••••••" className="input" />
+                </div>
+                <button className="btn btn-primary w-full">Đăng nhập</button>
+              </form>
+            </div>
+            <div className="card mt-4 p-5">
+              <div className="text-xs font-medium text-slate-700">Setup lần đầu (admin)</div>
+              <ol className="mt-2 list-inside list-decimal space-y-1 text-[11px] leading-relaxed text-slate-500">
+                <li>Supabase Dashboard → Authentication → Users → Add user (email + password).</li>
+                <li>
+                  SQL Editor: <code className="rounded bg-slate-100 px-1">select public.bootstrap_first_user();</code>
+                </li>
+                <li>User đầu tiên thành OWNER + có client đầu tiên + full access.</li>
+              </ol>
+            </div>
           </div>
         )}
 
