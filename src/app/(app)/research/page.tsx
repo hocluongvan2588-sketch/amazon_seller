@@ -61,7 +61,7 @@ export default async function ResearchPage({
       <Flash searchParams={params} />
 
       {canCreate ? (
-        <Card className="mb-6">
+        <Card className="mb-6" id="new-idea">
           <CardTitle>Tạo product idea mới</CardTitle>
           <form action={createOpportunityAction} className="grid gap-3 sm:grid-cols-5">
             <div className="sm:col-span-2">

@@ -44,7 +44,7 @@ export default async function TasksPage({
       <Flash searchParams={sp} />
 
       {canCreate ? (
-        <Card className="mb-6">
+        <Card className="mb-6" id="new-task">
           <CardTitle>Tạo task</CardTitle>
           <form action={createTaskAction} className="grid gap-2 md:grid-cols-6">
             <input name="title" required placeholder="Tiêu đề task" className="input md:col-span-2" />

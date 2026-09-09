@@ -66,7 +66,7 @@ export interface ClientAccount {
   id: string;
   organization_id: string;
   name: string;
-  business_name: string;
+  business_name: string | null;
   primary_contact: {
     name?: string;
     email?: string;
@@ -733,6 +733,8 @@ export interface StockoutRisk {
 
 export interface TodayCard {
   id: string;
+  /** ID of the underlying entity (task/approval/sku/thread…) for inline actions. */
+  entity_id: string | null;
   category:
     | "overdue_task"
     | "pending_approval"

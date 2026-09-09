@@ -23,6 +23,7 @@ import type {
 } from "../../types";
 import type {
   DataAdapter,
+  NewClientInput,
   OpportunityDetail,
   NewOpportunityInput,
   NewCompetitorInput,
@@ -280,6 +281,31 @@ export class DemoAdapter implements DataAdapter {
     const user = await this.requireUser();
     const client = store.clients.find((c) => c.id === id) ?? null;
     if (client) this.assertClientScope(user, id);
+    return client;
+  }
+
+  async createClient(input: NewClientInput, userId: string) {
+    const user = await this.requireUser();
+    if (!can(user.role, "client_profile", "create")) {
+      throw new PermissionError("Chỉ admin/owner được tạo client (ma trận §3.3).");
+    }
+    const now = new Date().toISOString();
+    const client = {
+      id: uid("client"),
+      organization_id: seed.ORG_ID,
+      name: input.name,
+      business_name: input.business_name ?? null,
+      primary_contact: input.primary_contact_name
+        ? { name: input.primary_contact_name, email: input.primary_contact_email ?? undefined }
+        : null,
+      status: "onboarding" as const,
+      owner_user_id: userId,
+      marketplace: input.marketplace ?? "US",
+      created_at: now,
+      updated_at: now,
+    };
+    store.clients.unshift(client);
+    this.audit(user, "client_accounts.insert", "client_accounts", client.id, null, { name: client.name }, client.id);
     return client;
   }
 
@@ -675,6 +701,20 @@ export class DemoAdapter implements DataAdapter {
   // -------------------------------------------------------------------------
   // Economics
   // -------------------------------------------------------------------------
+
+  async listSkuCatalog() {
+    const user = await this.requireUser();
+    const ids = this.clientIdsFor(user);
+    const out: { sku: (typeof store.skus)[number]; asin: (typeof store.asins)[number]; product: (typeof store.products)[number] }[] = [];
+    for (const sku of store.skus) {
+      const asin = store.asins.find((a) => a.id === sku.asin_id);
+      if (!asin) continue;
+      const product = store.products.find((p) => p.id === asin.product_id);
+      if (!product || !ids.has(product.client_account_id)) continue;
+      out.push({ sku, asin, product });
+    }
+    return out;
+  }
 
   async listCostProfiles(skuId: string) {
     const user = await this.requireUser();

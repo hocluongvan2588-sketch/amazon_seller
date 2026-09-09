@@ -65,6 +65,29 @@ export async function logoutAction() {
   redirect("/login");
 }
 
+export async function createClientAction(formData: FormData) {
+  const user = await requireUser();
+  const adapter = getAdapter();
+  try {
+    const client = await adapter.createClient(
+      {
+        name: String(formData.get("name")),
+        business_name: (formData.get("business_name") as string) || null,
+        marketplace: (String(formData.get("marketplace") || "US")) as never,
+        primary_contact_name: (formData.get("primary_contact_name") as string) || null,
+        primary_contact_email: (formData.get("primary_contact_email") as string) || null,
+      },
+      user.id
+    );
+    revalidatePath("/clients");
+    revalidatePath("/today");
+    flash(`/clients`, `Đã tạo client "${client.name}" (status onboarding).`);
+  } catch (e) {
+    unstable_rethrow(e);
+    flash("/clients", `Lỗi: ${(e as Error).message}`, false);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Product research
 // ---------------------------------------------------------------------------

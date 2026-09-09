@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { getAdapter } from "@/lib/data/factory";
 import { requireSessionUser } from "@/lib/session";
-import { canApprove, ROLE_LABELS } from "@/lib/permissions";
-import { decideApprovalAction, markCardReadAction } from "@/lib/actions";
+import { can, canApprove, ROLE_LABELS } from "@/lib/permissions";
+import {
+  createReorderAction,
+  decideApprovalAction,
+  markCardReadAction,
+  updateTaskStatusAction,
+} from "@/lib/actions";
 import { Flash } from "@/components/Flash";
 import {
   Badge,
@@ -47,13 +52,22 @@ export default async function TodayPage({
     adapter.getKpis(),
   ]);
 
+  const canDecide = canApprove(user.role, "approvals") || user.role === "admin" || user.role === "owner";
+
   const grouped = {
     critical: cards.filter((c) => c.severity === "critical"),
     high: cards.filter((c) => c.severity === "high"),
     medium: cards.filter((c) => c.severity === "medium"),
     low: cards.filter((c) => c.severity === "low"),
   };
-  const canDecide = canApprove(user.role, "approvals") || user.role === "admin" || user.role === "owner";
+
+  // Quick actions theo quyền create của từng role (ma trận §3.3)
+  const quickActions = [
+    can(user.role, "product_research", "create") && { href: "/research#new-idea", label: "+ Product idea" },
+    can(user.role, "client_profile", "create") && { href: "/clients#new-client", label: "+ Client" },
+    can(user.role, "tasks", "create") && { href: "/tasks#new-task", label: "+ Task" },
+    can(user.role, "ppc", "update") && { href: "/ads", label: "Chạy PPC rules" },
+  ].filter((x): x is { href: string; label: string } => x !== false);
 
   return (
     <div>
@@ -68,7 +82,7 @@ export default async function TodayPage({
       />
       <Flash searchParams={params} />
 
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
         <StatCard label="Việc cần xử lý" value={cards.length} hint="Trong phạm vi client được cấp" />
         <StatCard label="Chờ duyệt" value={kpis.approvalsPending} tone={kpis.approvalsPending > 3 ? "warn" : "default"} />
         <StatCard label="Task quá hạn" value={kpis.tasksOverdue} tone={kpis.tasksOverdue > 0 ? "bad" : "good"} />
@@ -80,69 +94,22 @@ export default async function TodayPage({
         />
       </div>
 
-      {(["critical", "high", "medium", "low"] as const).map((sev) =>
-        grouped[sev].length === 0 ? null : (
-          <div key={sev} className="mb-6">
-            <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
-              <SeverityBadge severity={sev} />
-              <span className="text-slate-400">{grouped[sev].length} việc</span>
-            </h2>
-            <div className="grid gap-3 lg:grid-cols-2">
-              {grouped[sev].map((card) => (
-                <Card key={card.id} className={card.read ? "opacity-60" : ""}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="mb-1 flex items-center gap-2">
-                        <Badge tone="slate">{CATEGORY_LABELS[card.category]}</Badge>
-                        {card.due_at ? (
-                          <span className="text-xs text-slate-400">
-                            due {new Date(card.due_at).toLocaleDateString("vi-VN")}
-                          </span>
-                        ) : null}
-                      </div>
-                      <h3 className="text-sm font-medium leading-snug text-slate-900">{card.title}</h3>
-                      <p className="mt-1 text-xs leading-relaxed text-slate-500">{card.explanation}</p>
-                    </div>
-                    {card.owner_user_id ? (
-                      <Avatar name={card.owner_user_id} size={28} />
-                    ) : null}
-                  </div>
-                  <div className="mt-3 flex items-center gap-2">
-                    <Link href={card.action_href} className="btn btn-primary btn-sm">
-                      {card.action_label}
-                    </Link>
-                    {card.evidence_href ? (
-                      <Link href={card.evidence_href} className="btn btn-ghost btn-sm">
-                        Evidence
-                      </Link>
-                    ) : null}
-                    <span className="ml-auto text-[11px] text-slate-300">
-                      {clients.find((c) => c.id === card.client_account_id)?.name ?? ""}
-                    </span>
-                    {!card.read ? (
-                      <form action={markCardReadAction}>
-                        <input type="hidden" name="card_id" value={card.id} />
-                        <button className="btn btn-ghost btn-sm" title="Đánh dấu đã đọc">
-                          ✓
-                        </button>
-                      </form>
-                    ) : null}
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )
-      )}
-
-      {cards.length === 0 ? (
-        <EmptyState title="Không có việc gì cần xử lý ngay" hint="Khi có task quá hạn, approval chờ duyệt, rủi ro stockout… chúng sẽ xuất hiện ở đây theo mức ưu tiên." />
+      {quickActions.length > 0 ? (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium uppercase tracking-wide text-slate-400">Hành động nhanh:</span>
+          {quickActions.map((a) => (
+            <Link key={a.href} href={a.href} className="btn btn-secondary btn-sm">
+              {a.label}
+            </Link>
+          ))}
+        </div>
       ) : null}
 
-      <div id="approvals" className="mt-8 scroll-mt-6">
+      {/* Approval queue đặt lên đầu — nơi owner/reviewer hành động nhiều nhất */}
+      <div id="approvals" className="mb-6 scroll-mt-6">
         <Card>
           <CardTitle right={<Badge tone="brand">{approvals.length} pending</Badge>}>
-            Approval queue
+            Approval queue {canDecide ? "— bạn có thể duyệt" : "— chờ reviewer quyết"}
           </CardTitle>
           {approvals.length === 0 ? (
             <EmptyState title="Không có approval nào đang chờ" />
@@ -195,6 +162,104 @@ export default async function TodayPage({
           )}
         </Card>
       </div>
+
+      {(["critical", "high", "medium", "low"] as const).map((sev) =>
+        grouped[sev].length === 0 ? null : (
+          <div key={sev} className="mb-6">
+            <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
+              <SeverityBadge severity={sev} />
+              <span className="text-slate-400">{grouped[sev].length} việc</span>
+            </h2>
+            <div className="grid gap-3 lg:grid-cols-2">
+              {grouped[sev].map((card) => (
+                <Card key={card.id} className={card.read ? "opacity-60" : ""}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="mb-1 flex items-center gap-2">
+                        <Badge tone="slate">{CATEGORY_LABELS[card.category]}</Badge>
+                        {card.due_at ? (
+                          <span className="text-xs text-slate-400">
+                            due {new Date(card.due_at).toLocaleDateString("vi-VN")}
+                          </span>
+                        ) : null}
+                      </div>
+                      <h3 className="text-sm font-medium leading-snug text-slate-900">{card.title}</h3>
+                      <p className="mt-1 text-xs leading-relaxed text-slate-500">{card.explanation}</p>
+                    </div>
+                    {card.owner_user_id ? <Avatar name={card.owner_user_id} size={28} /> : null}
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <Link href={card.action_href} className="btn btn-primary btn-sm">
+                      {card.action_label}
+                    </Link>
+                    {card.evidence_href ? (
+                      <Link href={card.evidence_href} className="btn btn-ghost btn-sm">
+                        Evidence
+                      </Link>
+                    ) : null}
+
+                    {/* --- Nút hành động ngay trên card (theo quyền role) --- */}
+                    {card.category === "pending_approval" && card.entity_id && canDecide ? (
+                      <form action={decideApprovalAction} className="flex items-center gap-1">
+                        <input type="hidden" name="id" value={card.entity_id} />
+                        <input
+                          name="reason"
+                          placeholder="Lý do…"
+                          required
+                          className="input h-8 w-36 px-2 py-0 text-xs"
+                        />
+                        <button name="decision" value="approved" className="btn btn-primary btn-sm">
+                          Duyệt
+                        </button>
+                        <button name="decision" value="rejected" className="btn btn-danger btn-sm">
+                          Từ chối
+                        </button>
+                      </form>
+                    ) : null}
+                    {card.category === "overdue_task" && card.entity_id && can(user.role, "tasks", "update") ? (
+                      <form action={updateTaskStatusAction}>
+                        <input type="hidden" name="id" value={card.entity_id} />
+                        <input type="hidden" name="status" value="completed" />
+                        <button className="btn btn-secondary btn-sm">✓ Hoàn thành</button>
+                      </form>
+                    ) : null}
+                    {card.category === "stockout_risk" && card.entity_id && can(user.role, "inventory_logistics", "update") ? (
+                      <form action={createReorderAction}>
+                        <input type="hidden" name="sku_id" value={card.entity_id} />
+                        <button className="btn btn-secondary btn-sm">Tạo reorder draft</button>
+                      </form>
+                    ) : null}
+                    {card.category === "customer_message" && card.entity_id && can(user.role, "customer_response", "update") ? (
+                      <Link href={`/messages/${card.entity_id}`} className="btn btn-secondary btn-sm">
+                        Phản hồi
+                      </Link>
+                    ) : null}
+
+                    <span className="ml-auto text-[11px] text-slate-300">
+                      {clients.find((c) => c.id === card.client_account_id)?.name ?? ""}
+                    </span>
+                    {!card.read ? (
+                      <form action={markCardReadAction}>
+                        <input type="hidden" name="card_id" value={card.id} />
+                        <button className="btn btn-ghost btn-sm" title="Đánh dấu đã đọc">
+                          ✓
+                        </button>
+                      </form>
+                    ) : null}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )
+      )}
+
+      {cards.length === 0 ? (
+        <EmptyState
+          title="Không có việc gì cần xử lý ngay"
+          hint="Khi có task quá hạn, approval chờ duyệt, rủi ro stockout… chúng sẽ xuất hiện ở đây theo mức ưu tiên."
+        />
+      ) : null}
     </div>
   );
 }

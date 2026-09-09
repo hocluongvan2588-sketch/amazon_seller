@@ -13,16 +13,20 @@ import { getSupabaseServerClient } from "./supabaseClient";
 import type {
   AiRun,
   ApprovalRequest,
-  CompetitorProduct,
-  Profile,
+  Asin,
   ClientAccount,
+  CompetitorProduct,
+  Product,
+  Profile,
   ResearchSource,
   SessionUser,
+  Sku,
   SystemRole,
 } from "../types";
 import type {
   CampaignWithMetrics,
   DataAdapter,
+  NewClientInput,
   InventoryRow,
   KpiSnapshot,
   LaunchDetail,
@@ -130,6 +134,30 @@ export class SupabaseAdapter implements DataAdapter {
   async getClient(id: string) {
     const { data } = await supabase().from("client_accounts").select("*").eq("id", id).maybeSingle();
     return data ?? null;
+  }
+
+  async createClient(input: NewClientInput, userId: string) {
+    const user = await this.requireUser();
+    if (!can(user.role, "client_profile", "create")) {
+      throw new PermissionError("Chỉ admin/owner được tạo client (ma trận §3.3).");
+    }
+    const { data, error } = await supabase()
+      .from("client_accounts")
+      .insert({
+        organization_id: user.organization_id,
+        name: input.name,
+        business_name: input.business_name ?? null,
+        marketplace: input.marketplace ?? "US",
+        primary_contact: input.primary_contact_name
+          ? { name: input.primary_contact_name, email: input.primary_contact_email ?? undefined }
+          : null,
+        owner_user_id: userId,
+        status: "onboarding",
+      })
+      .select()
+      .single();
+    if (error) throw new Error(`Không tạo được client (RLS chặn?): ${error.message}`);
+    return data as ClientAccount;
   }
 
   // --- product research ---------------------------------------------------------
@@ -455,6 +483,20 @@ export class SupabaseAdapter implements DataAdapter {
   }
 
   // --- economics ------------------------------------------------------------------
+
+  async listSkuCatalog() {
+    const sb = supabase();
+    const { data: products } = await sb.from("products").select("*, asins(*, skus(*))");
+    const out: { sku: Sku; asin: Asin; product: Product }[] = [];
+    for (const product of (products ?? []) as (Product & { asins?: (Asin & { skus?: Sku[] })[] })[]) {
+      for (const asin of product.asins ?? []) {
+        for (const sku of asin.skus ?? []) {
+          out.push({ sku, asin, product });
+        }
+      }
+    }
+    return out;
+  }
 
   async listCostProfiles(skuId: string) {
     const { data } = await supabase()

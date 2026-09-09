@@ -134,6 +134,20 @@ export interface KpiSnapshot {
 // Input shapes
 // ---------------------------------------------------------------------------
 
+export interface NewClientInput {
+  name: string;
+  business_name?: string | null;
+  marketplace?: string;
+  primary_contact_name?: string | null;
+  primary_contact_email?: string | null;
+}
+
+export interface SkuCatalogItem {
+  sku: Sku;
+  asin: Asin;
+  product: Product;
+}
+
 export interface NewOpportunityInput {
   client_account_id: string;
   name: string;
@@ -236,6 +250,7 @@ export interface DataAdapter {
   // --- clients ---------------------------------------------------------------
   listClients(): Promise<ClientAccount[]>;
   getClient(id: string): Promise<ClientAccount | null>;
+  createClient(input: NewClientInput, userId: string): Promise<ClientAccount>;
 
   // --- product research ------------------------------------------------------
   listOpportunities(clientId?: string): Promise<(ProductOpportunity & { client_name: string })[]>;
@@ -272,6 +287,8 @@ export interface DataAdapter {
   convertToLaunch(opportunityId: string, userId: string): Promise<{ launchId: string; productId: string }>;
 
   // --- economics -------------------------------------------------------------
+  /** Tất cả SKU trong scope user (kể cả chưa có snapshot) — nền cho economics. */
+  listSkuCatalog(): Promise<SkuCatalogItem[]>;
   listCostProfiles(skuId: string): Promise<CostProfile[]>;
   saveCostProfile(input: NewCostProfileInput, userId: string): Promise<CostProfile>;
   submitCostProfileApproval(id: string, userId: string): Promise<ApprovalRequest>;

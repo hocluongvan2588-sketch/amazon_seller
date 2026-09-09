@@ -91,6 +91,7 @@ export function buildTodayCards(input: TodayInputs): TodayCard[] {
     });
     cards.push({
       id: `task-${t.id}`,
+      entity_id: t.id,
       category: "overdue_task",
       title: `Quá hạn: ${t.title}`,
       client_account_id: t.client_account_id,
@@ -116,6 +117,7 @@ export function buildTodayCards(input: TodayInputs): TodayCard[] {
     });
     cards.push({
       id: `approval-${a.id}`,
+      entity_id: a.id,
       category: "pending_approval",
       title: `Chờ duyệt: ${a.title}`,
       client_account_id: a.client_account_id,
@@ -141,6 +143,7 @@ export function buildTodayCards(input: TodayInputs): TodayCard[] {
     });
     cards.push({
       id: `risk-${r.id}`,
+      entity_id: r.id,
       category: "product_risk",
       title: `Rủi ro ${r.severity === "critical" ? "nghiêm trọng" : "cao"}: ${r.opportunity.name}`,
       client_account_id: r.opportunity.client_account_id,
@@ -160,6 +163,7 @@ export function buildTodayCards(input: TodayInputs): TodayCard[] {
     const p = computePriority({ category: "listing_review", urgency: 3, confidence: 1, impact: 3 });
     cards.push({
       id: `listing-${l.id}`,
+      entity_id: l.id,
       category: "listing_review",
       title: `Listing chờ review: ${l.asin} v${l.version}`,
       client_account_id: l.client_account_id,
@@ -184,6 +188,7 @@ export function buildTodayCards(input: TodayInputs): TodayCard[] {
     });
     cards.push({
       id: `ppc-${r.id}`,
+      entity_id: r.id,
       category: "ppc_anomaly",
       title: `PPC: ${r.title}`,
       client_account_id: r.client_account_id,
@@ -208,6 +213,7 @@ export function buildTodayCards(input: TodayInputs): TodayCard[] {
     });
     cards.push({
       id: `stock-${i.skuId}`,
+      entity_id: i.skuId,
       category: "stockout_risk",
       title: `Stockout ${i.severity === "critical" ? "nghiêm trọng" : "nguy cơ"}: ${i.sku}`,
       client_account_id: i.client_account_id,
@@ -232,6 +238,7 @@ export function buildTodayCards(input: TodayInputs): TodayCard[] {
     });
     cards.push({
       id: `msg-${m.thread.id}`,
+      entity_id: m.thread.id,
       category: "customer_message",
       title: `Tin nhắn chưa xử lý: ${m.thread.subject ?? m.thread.customer_reference}`,
       client_account_id: m.thread.client_account_id,
@@ -251,6 +258,7 @@ export function buildTodayCards(input: TodayInputs): TodayCard[] {
     const p = computePriority({ category: "data_freshness", urgency: 2, confidence: 1, impact: 2 });
     cards.push({
       id: "stale-sources",
+      entity_id: null,
       category: "data_freshness",
       title: `${input.staleSources.length} nguồn dữ liệu đã cũ (>14 ngày)`,
       client_account_id: input.staleSources[0].product_opportunity_id ? input.clients.find((c) => c.id === input.clients.find((cl) => cl)?.id)?.id ?? input.clients[0]?.id : input.clients[0]?.id ?? "",
@@ -274,6 +282,7 @@ export function buildTodayCards(input: TodayInputs): TodayCard[] {
     const p = computePriority({ category: "opportunity", urgency: 2, confidence: 0.7, impact: 3 });
     cards.push({
       id: `opp-${o.id}`,
+      entity_id: o.id,
       category: "opportunity",
       title: `Cơ hội: ${o.name} (score ${Math.round(o.opportunity_score ?? 0)})`,
       client_account_id: o.client_account_id,
