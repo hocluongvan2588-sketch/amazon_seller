@@ -71,6 +71,19 @@ npm run build        # production build
 
 Xem chi tiết (kể thêm cách thêm thành viên, guardrail, troubleshooting): [`supabase/README.md`](supabase/README.md).
 
+### Deploy lên Vercel
+
+Repo đã kèm `vercel.json` ghim `framework: nextjs` (region `sin1` — Singapore, gần user VN và Supabase SG). Khi import project vào Vercel:
+
+1. **Framework Preset** phải là **Next.js** (nếu thấy "Other" → đổi trong Settings → General, hoặc `vercel.json` sẽ tự áp dụng khi redeploy).
+2. **Environment Variables** (Settings → Environment Variables) — thêm 2 biến sau nếu muốn chạy Supabase mode:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+   Không set 2 biến này → deployment chạy DEMO MODE (dữ liệu mẫu, nhãn amber hiện rõ trên header).
+3. **Authentication → URL Configuration** ở Supabase: thêm domain `*.vercel.app` của bạn vào *Redirect URLs* nếu dùng magic link/OAuth (đăng nhập email/password không cần bước này).
+4. Deploy. Không cần cấu hình Output Directory — preset Next.js tự dùng `.next`.
+
 ## 4. Cấu trúc thư mục
 
 ```
