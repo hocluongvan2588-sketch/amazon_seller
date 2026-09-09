@@ -607,7 +607,8 @@ export class DemoAdapter implements DataAdapter {
     if (!["go", "go_with_conditions"].includes(opp.decision ?? "")) {
       throw new Error("Chỉ opportunity có decision GO / GO WITH CONDITIONS mới chuyển được launch project.");
     }
-    this.assertModule(user, opp.client_account_id, "listing", "create");
+    // Convert belongs to the research workflow (spec §4): researcher/AM drive it.
+    this.assertModule(user, opp.client_account_id, "product_research", "create");
 
     const now = new Date().toISOString();
     const product = {

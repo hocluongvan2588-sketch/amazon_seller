@@ -520,9 +520,41 @@ create policy "skus read" on public.skus
 create policy "launch projects read" on public.launch_projects
   for select using (public.has_module_permission(client_account_id, 'listing', 'read'));
 
+-- launch project creation is part of the research workflow (spec §4):
+-- anyone who can create research may convert a GO opportunity into a launch.
+create policy "launch projects create from research" on public.launch_projects
+  for insert with check (
+    public.has_module_permission(client_account_id, 'product_research', 'create')
+    or public.has_module_permission(client_account_id, 'listing', 'create')
+  );
+
 create policy "launch projects write" on public.launch_projects
-  for all using (public.has_module_permission(client_account_id, 'listing', 'update'))
-  with check (public.has_module_permission(client_account_id, 'listing', 'update'));
+  for update using (public.has_module_permission(client_account_id, 'listing', 'update'));
+
+create policy "asins insert by research or content" on public.asins
+  for insert with check (
+    exists (
+      select 1 from public.products p
+      where p.id = asins.product_id
+        and (
+          public.has_module_permission(p.client_account_id, 'product_research', 'create')
+          or public.has_module_permission(p.client_account_id, 'listing', 'create')
+        )
+    )
+  );
+
+create policy "skus insert by research or content" on public.skus
+  for insert with check (
+    exists (
+      select 1 from public.asins a
+      join public.products p on p.id = a.product_id
+      where a.id = skus.asin_id
+        and (
+          public.has_module_permission(p.client_account_id, 'product_research', 'create')
+          or public.has_module_permission(p.client_account_id, 'listing', 'create')
+        )
+    )
+  );
 
 create policy "listing versions read" on public.listing_versions
   for select using (

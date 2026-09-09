@@ -614,14 +614,34 @@ export const AI_RUNS: AiRunSeed[] = [
     id: "air-1", client_account_id: "client-tlc", use_case: "market_summary",
     model_name: "heuristic-engine", prompt_version: "market-v1",
     input_record_ids: ["src-bottle-1", "src-bottle-2"], status: "succeeded", reviewed_by: null,
-    output: { summary: "Nhu cầu bình giữ nhiệt 500ml ổn định…", missing_data: ["Chi phí storage thực tế"] },
+    output: {
+      summary: "Nhu cầu bình giữ nhiệt 500ml ổn định: 5 đối thủ, median ~1.900 đơn/tháng (estimate), giá median ~$27.99, đầu bảng 15.600 reviews. 2 đối thủ rating < 4.2 → cơ hội khác biệt hóa chất lượng.",
+      findings: [
+        { type: "observed", claim: "Median doanh thu ước tính ~1.900 đơn/tháng (ESTIMATE từ provider, không phải sales thực tế).", evidence_ids: ["comp-ttle-1", "comp-ttle-2", "comp-ttle-3"], confidence: "high", impact: "high", recommended_action: "Đối chiếu với nguồn thứ hai trước khi forecast" },
+        { type: "ai_interpretation", claim: "Đối thủ đầu bảng (Steel Bottle with Straw Lid) có 15.600 reviews — rào cản social proof cao.", evidence_ids: ["comp-ttle-3"], confidence: "high", impact: "high", recommended_action: "Định vị khác biệt (size/phụ kiện) thay vì đối đầu trực tiếp" },
+        { type: "ai_interpretation", claim: "2/5 đối thủ có rating < 4.2 — tín hiệu cơ hội cải thiện chất lượng.", evidence_ids: ["comp-ttle-4", "comp-ttle-5"], confidence: "medium", impact: "medium", recommended_action: "Đào review pain-points của các đối thủ này" },
+      ],
+      missing_data: ["Cost profile chưa có — chưa tính được contribution margin"],
+      risks: ["Nắp rò nước theo feedback review đối thủ", "Cần chứng nhận FDA food-grade"],
+      next_actions: ["Tạo cost profile base scenario", "Chạy review mining để tìm điểm khác biệt hóa"],
+    },
     created_at: dateOffset(-18),
   },
   {
     id: "air-2", client_account_id: "client-tlc", use_case: "review_mining",
     model_name: "heuristic-engine", prompt_version: "review-v1",
     input_record_ids: ["src-bottle-3"], status: "succeeded", reviewed_by: "u-reviewer",
-    output: { summary: "4 nhóm insight: rò nước, giữ nhiệt tốt, sơn bong, size lớn hơn…", missing_data: [] },
+    output: {
+      summary: "Đào được 4 nhóm insight: rò nước (87 lượt, negative), giữ nhiệt tốt (210 lượt, positive), sơn bong (54 lượt, negative), muốn size lớn hơn (33 lượt, neutral). Pain point lớn nhất: rò nước ở nắp.",
+      findings: [
+        { type: "observed", claim: "PAIN POINT 'Rò nước ở nắp': xuất hiện trong 87 reviews (23 ví dụ cụ thể).", evidence_ids: ["src-bottle-3", "ri-1"], confidence: "high", impact: "high", recommended_action: "Đưa vào checklist yêu cầu cải tiến với supplier + nhấn mạnh ở listing" },
+        { type: "observed", claim: "ĐIỂM MẠNH 'Giữ nhiệt tốt': 210 reviews đề cập tích cực.", evidence_ids: ["src-bottle-3", "ri-2"], confidence: "high", impact: "medium", recommended_action: "Giữ nguyên tính năng, đưa lên bullet đầu tiên" },
+        { type: "ai_interpretation", claim: "PAIN POINT 'Sơn bong trầy': 54 reviews — rủi ro quality với quy trình sơn hiện tại.", evidence_ids: ["src-bottle-3", "ri-3"], confidence: "medium", impact: "medium", recommended_action: "Yêu cầu supplier dùng quy trình sơn tĩnh điện" },
+      ],
+      missing_data: [],
+      risks: ["Rò nước ở nắp", "Sơn bong trầy"],
+      next_actions: ["Yêu cầu supplier giải quyết: rò nước ở nắp", "Tạo task content: đưa giải pháp pain point vào bullets"],
+    },
     created_at: dateOffset(-17),
   },
 ];
