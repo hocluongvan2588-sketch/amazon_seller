@@ -1,0 +1,3 @@
+# Nền tảng vận hành nội bộ — không cho công cụ tìm kiếm index
+User-agent: *
+Disallow: /
