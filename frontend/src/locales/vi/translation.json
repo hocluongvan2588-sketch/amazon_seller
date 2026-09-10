@@ -1,0 +1,34 @@
+{
+  "nav": {
+    "dashboard": "Trang chủ",
+    "profit": "Lợi nhuận & Doanh thu",
+    "inventory": "Tồn kho & BổSupply",
+    "review": "Review & Khách hàng",
+    "recommend": "Khuyến nghị AI",
+    "audit": "Nhật ký audit",
+    "setting": "Cài đặt"
+  },
+  "common": {
+    "loading": "Đang tải..."
+  },
+  "dashboard": {
+    "title": "Bảng điều khiển Vexim"
+  },
+  "profit": {
+    "title": "Lợi nhuận & Doanh thu"
+  },
+  "inventory": {
+    "title": "Tồn kho & BổSupply"
+  },
+  "review": {
+    "title": "Review & Khách hàng"
+  },
+  "recommend": {
+    "title": "Khuyến nghị AI"
+  },
+  "audit": {
+    "title": "Nhật ký audit"
+  },
+  "setting": {
+    "title": "Cài đặt"
+  }
