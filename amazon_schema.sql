@@ -7,9 +7,9 @@
 -- 1️⃣ Extensions
 create extension if not exists "pgcrypto";
 
--- 2️⃣ Enums
-create enum org_role '{"admin","operator","viewer","auditor"}';
-create enum marketplace '{"US","EU","JP","DE","UK"}';
+-- 2️⃣ Enums (PostgreSQL CREATE TYPE ... AS ENUM)
+create type org_role as enum ('admin','operator','viewer','auditor');
+create type marketplace as enum ('US','EU','JP','DE','UK');
 
 -- 3️⃣ Organizations (top‑level tenant)
 create table organizations (
